@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reloj</title>
+<style>
+  /* Colores exactos de Notion. Claro: fondo transparente. Oscuro: #191919 (fondo de página de Notion). */
+  :root {
+    --bg: transparent;
+    --texto: #37352f;
+    --gris: rgba(55, 53, 47, 0.5);
+    --verde: #448361;
+  }
+  :root.oscuro {
+    --bg: #191919;
+    --texto: rgba(255, 255, 255, 0.81);
+    --gris: rgba(255, 255, 255, 0.4);
+    --verde: #529e72;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    border: 0;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    cursor: default;
+  }
+  :root.centro body { justify-content: center; text-align: center; }
+
+  .reloj { padding: 0 2px; }
+
+  .hora {
+    color: var(--texto);
+    font-weight: 600;
+    font-size: clamp(34px, min(24vw, 62vh), 96px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .dos-puntos {
+    display: inline-block;
+    margin: 0 0.02em;
+    transform: translateY(-0.06em);
+    animation: latido 2s ease-in-out infinite;
+  }
+  @keyframes latido { 50% { opacity: 0.35; } }
+
+  .fecha {
+    margin-top: 0.7em;
+    color: var(--verde);
+    font-weight: 600;
+    font-size: clamp(9px, min(3.4vw, 9vh), 13px);
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .fecha .sep { color: var(--gris); margin: 0 0.35em; }
+
+  @media (prefers-reduced-motion: reduce) { .dos-puntos { animation: none; } }
+</style>
+<script>
+  // ?tema=claro | ?tema=oscuro fuerza el tema; sin parámetro sigue al sistema.
+  // ?alinear=centro centra el reloj (por defecto queda alineado a la izquierda, como el texto de Notion).
+  (function () {
+    var p = new URLSearchParams(location.search);
+    var tema = p.get("tema");
+    var oscuro = tema === "oscuro" || (tema !== "claro" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    var raiz = document.documentElement;
+    if (oscuro) raiz.classList.add("oscuro");
+    if (p.get("alinear") === "centro") raiz.classList.add("centro");
+    if (!tema) {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (e) {
+        raiz.classList.toggle("oscuro", e.matches);
+      });
+    }
+  })();
+</script>
+</head>
+<body>
+<div class="reloj">
+  <div class="hora"><span id="hh">--</span><span class="dos-puntos">:</span><span id="mm">--</span></div>
+  <div class="fecha"><span id="dia"></span><span class="sep">·</span><span id="fecha"></span></div>
+</div>
+<script>
+  var hh = document.getElementById("hh");
+  var mm = document.getElementById("mm");
+  var dia = document.getElementById("dia");
+  var fecha = document.getElementById("fecha");
+
+  function dosDigitos(n) { return String(n).padStart(2, "0"); }
+
+  function actualizar() {
+    var ahora = new Date();
+    hh.textContent = dosDigitos(ahora.getHours());
+    mm.textContent = dosDigitos(ahora.getMinutes());
+    dia.textContent = ahora.toLocaleDateString("es-UY", { weekday: "long" });
+    fecha.textContent = ahora.toLocaleDateString("es-UY", { day: "numeric", month: "long" });
+    // Se reprograma justo al cambio de minuto para no quedar desfasado.
+    setTimeout(actualizar, 60000 - (ahora.getSeconds() * 1000 + ahora.getMilliseconds()) + 50);
+  }
+  actualizar();
+</script>
+</body>
+</html>
